@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../features/staff/presentation/pages/staff_home_page.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -28,15 +29,25 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        if (state is AuthLoading) {
+        if (state is AuthLoading || state is AuthInitial) {
           return const Scaffold(
+            backgroundColor: Color(0xFF161618),
             body: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Color(0xFFE92E5F)),
             ),
           );
         }
 
         if (state is AuthAuthenticated) {
+          final role = state.user.role;
+
+          // DEBUG: Remove this after confirming roles work
+          debugPrint('🔐 AuthGate — user: ${state.user.email}, role: "$role"');
+
+          if (role == 'staff') {
+            return const StaffHomePage();
+          }
+
           return const HomePlaceholderPage();
         }
 

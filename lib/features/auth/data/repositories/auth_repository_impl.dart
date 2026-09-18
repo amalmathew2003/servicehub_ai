@@ -67,14 +67,32 @@ class AuthRepositoryImpl implements AuthRepository {
     final document =
         await datasource.getUserDocument(user.uid);
 
-    if (!document.exists || document.data() == null) {
-      throw Exception(
-        'User profile not found.',
-      );
+    // If Firestore doc exists, use it
+    if (document.exists && document.data() != null) {
+      return AppUserModel.fromMap(document.data()!);
     }
 
-    return AppUserModel.fromMap(
-      document.data()!,
+    // Fallback: Firestore doc missing (e.g. rules blocked write during registration).
+    // Try to re-create the document using data from Firebase Auth.
+    // Default role to 'user' since we can't recover it.
+    const fallbackRole = 'user';
+    try {
+      await datasource.createUserDocument(
+        user: user,
+        name: user.displayName ?? user.email?.split('@').first ?? 'User',
+        role: fallbackRole,
+      );
+    } catch (_) {
+      // Still blocked by rules — return minimal user so app doesn't crash.
+    }
+
+    return AppUserModel(
+      uid: user.uid,
+      name: user.displayName ?? user.email?.split('@').first ?? 'User',
+      email: user.email ?? email,
+      phone: user.phoneNumber,
+      role: fallbackRole,
+      profileImage: user.photoURL,
     );
   }
 

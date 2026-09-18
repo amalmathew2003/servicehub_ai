@@ -8,6 +8,8 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/role_chip.dart';
+import '../../../../features/staff/presentation/pages/staff_home_page.dart';
+import 'home_placeholder_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -43,6 +45,8 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       return;
     }
+
+    debugPrint('📝 Registering: name=$name, email=$email, role=$_selectedRole');
 
     context.read<AuthBloc>().add(
           RegisterRequested(
@@ -88,7 +92,20 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            Navigator.pop(context);
+            final role = state.user.role;
+            final destination = role == 'staff'
+                ? const StaffHomePage()
+                : const HomePlaceholderPage();
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => destination,
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
+            );
           }
 
           if (state is AuthError) {

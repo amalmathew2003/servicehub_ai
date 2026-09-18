@@ -12,10 +12,34 @@ import '../../features/auth/domain/usecases/logout_user.dart';
 import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
+// ============================================================
+// STAFF SERVICE IMPORTS
+// ============================================================
+
+import '../../features/staff/data/datasources/staff_service_datasource.dart';
+import '../../features/staff/data/repositories/staff_service_repository_impl.dart';
+import '../../features/staff/domain/repositories/staff_service_repository.dart';
+import '../../features/staff/domain/usecases/add_staff_service.dart';
+import '../../features/staff/domain/usecases/get_staff_services.dart';
+import '../../features/staff/presentation/bloc/staff_service_bloc.dart';
+
+// ============================================================
+// STAFF PROFILE IMPORTS
+// ============================================================
+
+import '../../features/staff/data/datasources/staff_profile_datasource.dart';
+import '../../features/staff/data/repositories/staff_profile_repository_impl.dart';
+import '../../features/staff/domain/repositories/staff_profile_repository.dart';
+import '../../features/staff/domain/usecases/get_staff_profile.dart';
+import '../../features/staff/domain/usecases/update_staff_profile.dart';
+import '../../features/staff/presentation/bloc/staff_profile_bloc.dart';
+
 final sl = GetIt.instance;
 
 void setupDependencies() {
+  // ============================================================
   // Firebase
+  // ============================================================
 
   sl.registerLazySingleton<FirebaseAuth>(
     () => FirebaseAuth.instance,
@@ -25,7 +49,11 @@ void setupDependencies() {
     () => FirebaseFirestore.instance,
   );
 
-  // Datasource
+  // ============================================================
+  // AUTH FEATURE
+  // ============================================================
+
+  // -------------------- Datasource --------------------
 
   sl.registerLazySingleton<AuthDatasource>(
     () => AuthDatasource(
@@ -34,7 +62,7 @@ void setupDependencies() {
     ),
   );
 
-  // Repository
+  // -------------------- Repository --------------------
 
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
@@ -42,29 +70,39 @@ void setupDependencies() {
     ),
   );
 
-  // UseCases
+  // -------------------- UseCases --------------------
 
   sl.registerLazySingleton<RegisterUser>(
-    () => RegisterUser(sl<AuthRepository>()),
+    () => RegisterUser(
+      sl<AuthRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<LoginUser>(
-    () => LoginUser(sl<AuthRepository>()),
+    () => LoginUser(
+      sl<AuthRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<GoogleLogin>(
-    () => GoogleLogin(sl<AuthRepository>()),
+    () => GoogleLogin(
+      sl<AuthRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<LogoutUser>(
-    () => LogoutUser(sl<AuthRepository>()),
+    () => LogoutUser(
+      sl<AuthRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<GetCurrentUser>(
-    () => GetCurrentUser(sl<AuthRepository>()),
+    () => GetCurrentUser(
+      sl<AuthRepository>(),
+    ),
   );
 
-  // Bloc
+  // -------------------- Bloc --------------------
 
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
@@ -73,6 +111,92 @@ void setupDependencies() {
       googleLogin: sl<GoogleLogin>(),
       logoutUser: sl<LogoutUser>(),
       getCurrentUser: sl<GetCurrentUser>(),
+    ),
+  );
+
+  // ============================================================
+  // STAFF SERVICE FEATURE
+  // ============================================================
+
+  // -------------------- Datasource --------------------
+
+  sl.registerLazySingleton<StaffServiceDatasource>(
+    () => StaffServiceDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
+  );
+
+  // -------------------- Repository --------------------
+
+  sl.registerLazySingleton<StaffServiceRepository>(
+    () => StaffServiceRepositoryImpl(
+      datasource: sl<StaffServiceDatasource>(),
+    ),
+  );
+
+  // -------------------- UseCases --------------------
+
+  sl.registerLazySingleton<AddStaffService>(
+    () => AddStaffService(
+      sl<StaffServiceRepository>(),
+    ),
+  );
+
+  sl.registerLazySingleton<GetStaffServices>(
+    () => GetStaffServices(
+      sl<StaffServiceRepository>(),
+    ),
+  );
+
+  // -------------------- Bloc --------------------
+
+  sl.registerFactory<StaffServiceBloc>(
+    () => StaffServiceBloc(
+      addStaffService: sl<AddStaffService>(),
+      getStaffServices: sl<GetStaffServices>(),
+    ),
+  );
+
+  // ============================================================
+  // STAFF PROFILE FEATURE
+  // ============================================================
+
+  // -------------------- Datasource --------------------
+
+  sl.registerLazySingleton<StaffProfileDatasource>(
+    () => StaffProfileDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
+  );
+
+  // -------------------- Repository --------------------
+
+  sl.registerLazySingleton<StaffProfileRepository>(
+    () => StaffProfileRepositoryImpl(
+      datasource: sl<StaffProfileDatasource>(),
+    ),
+  );
+
+  // -------------------- UseCases --------------------
+
+  sl.registerLazySingleton<GetStaffProfile>(
+    () => GetStaffProfile(
+      sl<StaffProfileRepository>(),
+    ),
+  );
+
+  sl.registerLazySingleton<UpdateStaffProfile>(
+    () => UpdateStaffProfile(
+      sl<StaffProfileRepository>(),
+    ),
+  );
+
+  // -------------------- Bloc --------------------
+
+  sl.registerFactory<StaffProfileBloc>(
+    () => StaffProfileBloc(
+      getStaffProfile: sl<GetStaffProfile>(),
+      updateStaffProfile: sl<UpdateStaffProfile>(),
     ),
   );
 }

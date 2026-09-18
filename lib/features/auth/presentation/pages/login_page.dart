@@ -9,6 +9,7 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/role_chip.dart';
+import '../../../../features/staff/presentation/pages/staff_home_page.dart';
 import 'home_placeholder_page.dart';
 import 'register_page.dart';
 
@@ -90,9 +91,19 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
+            final role = state.user.role;
+            final destination = role == 'staff'
+                ? const StaffHomePage()
+                : const HomePlaceholderPage();
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomePlaceholderPage()),
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => destination,
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
             );
           }
 
