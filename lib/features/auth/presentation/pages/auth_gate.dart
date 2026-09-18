@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../features/staff/presentation/pages/staff_home_page.dart';
+import '../../../../features/staff/presentation/pages/staff_main_page.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -45,7 +45,7 @@ class _AuthGateState extends State<AuthGate> {
           debugPrint('🔐 AuthGate — user: ${state.user.email}, role: "$role"');
 
           if (role == 'staff') {
-            return const StaffHomePage();
+            return const StaffMainPage();
           }
 
           return const HomePlaceholderPage();

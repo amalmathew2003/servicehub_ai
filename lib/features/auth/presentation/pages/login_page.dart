@@ -9,7 +9,7 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/role_chip.dart';
-import '../../../../features/staff/presentation/pages/staff_home_page.dart';
+import '../../../../features/staff/presentation/pages/staff_main_page.dart';
 import 'home_placeholder_page.dart';
 import 'register_page.dart';
 
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
           if (state is AuthAuthenticated) {
             final role = state.user.role;
             final destination = role == 'staff'
-                ? const StaffHomePage()
+                ? const StaffMainPage()
                 : const HomePlaceholderPage();
             Navigator.pushReplacement(
               context,
