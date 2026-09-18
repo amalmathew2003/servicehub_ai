@@ -1,5 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../../../core/service/service_locator.dart';
+import '../bloc/staff_profile_bloc.dart';
+import '../bloc/staff_profile_event.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/staff_animated_background.dart';
@@ -23,8 +29,18 @@ class _StaffMainPageState extends State<StaffMainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
+    final user = FirebaseAuth.instance.currentUser;
+
+    return BlocProvider(
+      create: (_) {
+        final bloc = sl<StaffProfileBloc>();
+        if (user != null) {
+          bloc.add(LoadStaffProfile(staffUid: user.uid));
+        }
+        return bloc;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
       body: Stack(
         children: [
           // Persistent Animated Background
@@ -69,6 +85,7 @@ class _StaffMainPageState extends State<StaffMainPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

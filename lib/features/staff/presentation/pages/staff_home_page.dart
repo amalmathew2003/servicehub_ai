@@ -5,12 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:service_hub_ai/core/service/service_locator.dart';
+import 'package:service_hub_ai/features/staff/domain/entities/staff_profile.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_event.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/staff_service.dart';
 import '../bloc/staff_service_bloc.dart';
 import '../bloc/staff_service_event.dart';
 import '../bloc/staff_service_state.dart';
+import '../bloc/staff_profile_bloc.dart';
+import '../bloc/staff_profile_state.dart';
 import 'staff_profile_page.dart';
 
 class StaffHomePage extends StatelessWidget {
@@ -148,38 +152,88 @@ class _StaffHomeView extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Status pill
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                color: Colors.greenAccent,
-                                size: 8,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Online',
-                                style: TextStyle(
-                                  color: Colors.greenAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                        // Live status pill from StaffProfileBloc
+                        BlocBuilder<StaffProfileBloc, StaffProfileState>(
+                          builder: (context, profileState) {
+                            final isOnline = profileState is StaffProfileLoaded
+                                ? profileState.profile.isOnline
+                                : false;
+                            return GestureDetector(
+                              onTap: () {
+                                if (profileState is! StaffProfileLoaded) return;
+                                final profile = profileState.profile;
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user == null) return;
+                                
+                                context.read<StaffProfileBloc>().add(
+                                  UpdateStaffProfileRequested(
+                                    staffUid: user.uid,
+                                    isSilent: true,
+                                    profile: StaffProfile(
+                                      uid: profile.uid,
+                                      name: profile.name,
+                                      email: profile.email,
+                                      phone: profile.phone,
+                                      profileImage: profile.profileImage,
+                                      latitude: profile.latitude,
+                                      longitude: profile.longitude,
+                                      isOnline: !isOnline,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isOnline
+                                      ? Colors.green.withValues(alpha: 0.15)
+                                      : Colors.grey.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isOnline
+                                        ? Colors.green.withValues(alpha: 0.4)
+                                        : Colors.grey.withValues(alpha: 0.3),
+                                  ),
+                                  boxShadow: [
+                                    if (isOnline)
+                                      BoxShadow(
+                                        color: Colors.green.withValues(alpha: 0.2),
+                                        blurRadius: 8,
+                                        spreadRadius: -2,
+                                      ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.circle,
+                                      color: isOnline
+                                          ? Colors.greenAccent
+                                          : Colors.grey,
+                                      size: 8,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isOnline ? 'Online' : 'Offline',
+                                      style: TextStyle(
+                                        color: isOnline
+                                            ? Colors.greenAccent
+                                            : Colors.grey,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),

@@ -55,7 +55,12 @@ class StaffProfileBloc extends Bloc<StaffProfileEvent, StaffProfileState> {
     UpdateStaffProfileRequested event,
     Emitter<StaffProfileState> emit,
   ) async {
-    emit(const StaffProfileLoading());
+    if (event.isSilent) {
+      // Optimistic update
+      emit(StaffProfileLoaded(profile: event.profile));
+    } else {
+      emit(const StaffProfileLoading());
+    }
 
     try {
       await updateStaffProfile(
@@ -63,13 +68,10 @@ class StaffProfileBloc extends Bloc<StaffProfileEvent, StaffProfileState> {
         profile: event.profile,
       );
 
-      emit(const StaffProfileUpdated());
-
-      emit(
-        StaffProfileLoaded(
-          profile: event.profile,
-        ),
-      );
+      if (!event.isSilent) {
+        emit(const StaffProfileUpdated());
+        emit(StaffProfileLoaded(profile: event.profile));
+      }
     } catch (e) {
       emit(
         StaffProfileError(

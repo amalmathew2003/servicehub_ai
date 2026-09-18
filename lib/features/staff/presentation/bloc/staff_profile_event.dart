@@ -23,12 +23,14 @@ class LoadStaffProfile extends StaffProfileEvent {
 class UpdateStaffProfileRequested extends StaffProfileEvent {
   final String staffUid;
   final StaffProfile profile;
+  final bool isSilent;
 
   const UpdateStaffProfileRequested({
     required this.staffUid,
     required this.profile,
+    this.isSilent = false,
   });
 
   @override
-  List<Object?> get props => [staffUid, profile];
+  List<Object?> get props => [staffUid, profile, isSilent];
 }
