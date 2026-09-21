@@ -1,6 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:service_hub_ai/features/booking/data/datasources/booking_datasource.dart';
+import 'package:service_hub_ai/features/booking/data/repositories/booking_repository_impl.dart';
+import 'package:service_hub_ai/features/booking/domain/repositories/booking_repository.dart';
+import 'package:service_hub_ai/features/booking/domain/usecases/create_booking.dart';
+import 'package:service_hub_ai/features/booking/domain/usecases/get_staff_bookings.dart';
+import 'package:service_hub_ai/features/booking/domain/usecases/update_booking_status.dart';
+import 'package:service_hub_ai/features/booking/presentation/bloc/booking_bloc.dart';
+import 'package:service_hub_ai/features/location/domain/usecases/get_location_name.dart';
+import 'package:service_hub_ai/features/location/domain/usecases/get_location_stream.dart';
 
 import '../../features/auth/data/datasources/auth_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -34,20 +43,25 @@ import '../../features/staff/domain/usecases/get_staff_profile.dart';
 import '../../features/staff/domain/usecases/update_staff_profile.dart';
 import '../../features/staff/presentation/bloc/staff_profile_bloc.dart';
 
+// ============================================================
+// LOCATION IMPORTS
+// ============================================================
+
+import '../../features/location/data/location_service.dart';
+import '../../features/location/data/repositories/location_repository_impl.dart';
+import '../../features/location/domain/repositories/location_repository.dart';
+import '../../features/location/domain/usecases/get_current_location.dart';
+
 final sl = GetIt.instance;
 
 void setupDependencies() {
   // ============================================================
-  // Firebase
+  // FIREBASE
   // ============================================================
 
-  sl.registerLazySingleton<FirebaseAuth>(
-    () => FirebaseAuth.instance,
-  );
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
-  sl.registerLazySingleton<FirebaseFirestore>(
-    () => FirebaseFirestore.instance,
-  );
+  sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
   // ============================================================
   // AUTH FEATURE
@@ -65,41 +79,25 @@ void setupDependencies() {
   // -------------------- Repository --------------------
 
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      datasource: sl<AuthDatasource>(),
-    ),
+    () => AuthRepositoryImpl(datasource: sl<AuthDatasource>()),
   );
 
   // -------------------- UseCases --------------------
 
   sl.registerLazySingleton<RegisterUser>(
-    () => RegisterUser(
-      sl<AuthRepository>(),
-    ),
+    () => RegisterUser(sl<AuthRepository>()),
   );
 
-  sl.registerLazySingleton<LoginUser>(
-    () => LoginUser(
-      sl<AuthRepository>(),
-    ),
-  );
+  sl.registerLazySingleton<LoginUser>(() => LoginUser(sl<AuthRepository>()));
 
   sl.registerLazySingleton<GoogleLogin>(
-    () => GoogleLogin(
-      sl<AuthRepository>(),
-    ),
+    () => GoogleLogin(sl<AuthRepository>()),
   );
 
-  sl.registerLazySingleton<LogoutUser>(
-    () => LogoutUser(
-      sl<AuthRepository>(),
-    ),
-  );
+  sl.registerLazySingleton<LogoutUser>(() => LogoutUser(sl<AuthRepository>()));
 
   sl.registerLazySingleton<GetCurrentUser>(
-    () => GetCurrentUser(
-      sl<AuthRepository>(),
-    ),
+    () => GetCurrentUser(sl<AuthRepository>()),
   );
 
   // -------------------- Bloc --------------------
@@ -121,31 +119,23 @@ void setupDependencies() {
   // -------------------- Datasource --------------------
 
   sl.registerLazySingleton<StaffServiceDatasource>(
-    () => StaffServiceDatasource(
-      firestore: sl<FirebaseFirestore>(),
-    ),
+    () => StaffServiceDatasource(firestore: sl<FirebaseFirestore>()),
   );
 
   // -------------------- Repository --------------------
 
   sl.registerLazySingleton<StaffServiceRepository>(
-    () => StaffServiceRepositoryImpl(
-      datasource: sl<StaffServiceDatasource>(),
-    ),
+    () => StaffServiceRepositoryImpl(datasource: sl<StaffServiceDatasource>()),
   );
 
   // -------------------- UseCases --------------------
 
   sl.registerLazySingleton<AddStaffService>(
-    () => AddStaffService(
-      sl<StaffServiceRepository>(),
-    ),
+    () => AddStaffService(sl<StaffServiceRepository>()),
   );
 
   sl.registerLazySingleton<GetStaffServices>(
-    () => GetStaffServices(
-      sl<StaffServiceRepository>(),
-    ),
+    () => GetStaffServices(sl<StaffServiceRepository>()),
   );
 
   // -------------------- Bloc --------------------
@@ -164,39 +154,114 @@ void setupDependencies() {
   // -------------------- Datasource --------------------
 
   sl.registerLazySingleton<StaffProfileDatasource>(
-    () => StaffProfileDatasource(
-      firestore: sl<FirebaseFirestore>(),
-    ),
+    () => StaffProfileDatasource(firestore: sl<FirebaseFirestore>()),
   );
 
   // -------------------- Repository --------------------
 
   sl.registerLazySingleton<StaffProfileRepository>(
-    () => StaffProfileRepositoryImpl(
-      datasource: sl<StaffProfileDatasource>(),
-    ),
+    () => StaffProfileRepositoryImpl(datasource: sl<StaffProfileDatasource>()),
   );
 
   // -------------------- UseCases --------------------
 
   sl.registerLazySingleton<GetStaffProfile>(
-    () => GetStaffProfile(
-      sl<StaffProfileRepository>(),
-    ),
+    () => GetStaffProfile(sl<StaffProfileRepository>()),
   );
 
   sl.registerLazySingleton<UpdateStaffProfile>(
-    () => UpdateStaffProfile(
-      sl<StaffProfileRepository>(),
-    ),
+    () => UpdateStaffProfile(sl<StaffProfileRepository>()),
   );
 
   // -------------------- Bloc --------------------
 
-  sl.registerFactory<StaffProfileBloc>(
-    () => StaffProfileBloc(
-      getStaffProfile: sl<GetStaffProfile>(),
-      updateStaffProfile: sl<UpdateStaffProfile>(),
-    ),
-  );
+sl.registerFactory<StaffProfileBloc>(
+  () => StaffProfileBloc(
+    getStaffProfile: sl<GetStaffProfile>(),
+    updateStaffProfile: sl<UpdateStaffProfile>(),
+    getCurrentLocation: sl<GetCurrentLocation>(),
+    getLocationName: sl<GetLocationName>(),
+    getLocationStream: sl<GetLocationStream>(),
+  ),
+);
+
+// ============================================================
+// LOCATION FEATURE
+// ============================================================
+
+// -------------------- Location Service --------------------
+
+sl.registerLazySingleton<LocationService>(
+  () => LocationService(),
+);
+
+// -------------------- Repository --------------------
+
+sl.registerLazySingleton<LocationRepository>(
+  () => LocationRepositoryImpl(
+    locationService: sl<LocationService>(),
+  ),
+);
+
+// -------------------- UseCases --------------------
+
+sl.registerLazySingleton<GetCurrentLocation>(
+  () => GetCurrentLocation(
+    repository: sl<LocationRepository>(),
+  ),
+);
+
+sl.registerLazySingleton<GetLocationName>(
+  () => GetLocationName(
+    repository: sl<LocationRepository>(),
+  ),
+);
+
+sl.registerLazySingleton<GetLocationStream>(
+  () => GetLocationStream(
+    repository: sl<LocationRepository>(),
+  ),
+);
+
+
+
+
+// BOOKING
+sl.registerLazySingleton<BookingDatasource>(
+  () => BookingDatasource(
+    firestore: sl<FirebaseFirestore>(),
+  ),
+);
+
+sl.registerLazySingleton<BookingRepository>(
+  () => BookingRepositoryImpl(
+    datasource: sl<BookingDatasource>(),
+  ),
+);
+
+sl.registerLazySingleton<CreateBooking>(
+  () => CreateBooking(
+    sl<BookingRepository>(),
+  ),
+);
+
+sl.registerLazySingleton<GetStaffBookings>(
+  () => GetStaffBookings(
+    sl<BookingRepository>(),
+  ),
+);
+
+sl.registerLazySingleton<UpdateBookingStatus>(
+  () => UpdateBookingStatus(
+    sl<BookingRepository>(),
+  ),
+);
+
+sl.registerFactory<BookingBloc>(
+  () => BookingBloc(
+    createBooking: sl<CreateBooking>(),
+    getStaffBookings: sl<GetStaffBookings>(),
+    updateBookingStatus: sl<UpdateBookingStatus>(),
+  ),
+);
 }

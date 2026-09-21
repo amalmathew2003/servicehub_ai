@@ -1,14 +1,13 @@
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_event.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/service/service_locator.dart';
-import '../../domain/entities/staff_profile.dart';
 import '../bloc/staff_profile_bloc.dart';
-import '../bloc/staff_profile_event.dart';
 import '../bloc/staff_profile_state.dart';
 import 'edit_staff_profile_page.dart';
 
@@ -133,14 +132,9 @@ class StaffProfilePage extends StatelessWidget {
                     title: 'Phone',
                     value: profile.phone ?? 'Not added',
                   ),
-
-                  _ProfileItem(
-                    icon: Icons.location_on_outlined,
-                    title: 'Location',
-                    value:
-                        (profile.latitude != null && profile.longitude != null)
-                        ? '${profile.latitude!.toStringAsFixed(2)}, ${profile.longitude!.toStringAsFixed(2)}'
-                        : 'Location not available',
+                  _LocationProfileItem(
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
                   ),
 
                   const SizedBox(height: 24),
@@ -215,11 +209,15 @@ class _ProfileItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
+  final Widget? trailing;
+  final VoidCallback? onTap;
 
   const _ProfileItem({
     required this.icon,
     required this.title,
     required this.value,
+    this.trailing,
+    this.onTap,
   });
 
   @override
@@ -230,56 +228,134 @@ class _ProfileItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: AppColors.primary, size: 22),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textLightSecondary.withValues(
-                            alpha: 0.7,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, color: AppColors.primary, size: 22),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textLightSecondary.withValues(
+                                alpha: 0.7,
+                              ),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
+                          const SizedBox(height: 4),
+                          Text(
+                            value,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: AppColors.textLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColors.textLight,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    ?trailing,
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LocationProfileItem extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+
+  const _LocationProfileItem({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  Future<String> _getAddress() async {
+    if (latitude == null || longitude == null) {
+      return 'Tap to update location';
+    }
+    try {
+      final geocoding = Geocoding();
+      final placemarks = await geocoding.placemarkFromCoordinates(latitude!, longitude!);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final parts = <String>[
+          if (place.subLocality != null && place.subLocality!.isNotEmpty) place.subLocality!,
+          if (place.locality != null && place.locality!.isNotEmpty) place.locality!,
+          if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) place.administrativeArea!,
+        ].join(', ');
+        return parts.isNotEmpty
+            ? parts
+            : '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}';
+      }
+    } catch (_) {}
+    return '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _getAddress(),
+      builder: (context, snapshot) {
+        final address = snapshot.connectionState == ConnectionState.waiting
+            ? (latitude != null
+                ? '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}'
+                : 'Tap to update location')
+            : (snapshot.data ?? 'Tap to update location');
+
+        return _ProfileItem(
+          icon: Icons.location_on_outlined,
+          title: 'Location',
+          value: address,
+          trailing: const Icon(
+            Icons.my_location_rounded,
+            color: AppColors.primary,
+            size: 20,
+          ),
+          onTap: () {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              context.read<StaffProfileBloc>().add(
+                    UpdateStaffLocationRequested(staffUid: user.uid),
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Updating location...'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+        );
+      },
     );
   }
 }

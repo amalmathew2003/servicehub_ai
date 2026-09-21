@@ -6,6 +6,7 @@ class StaffProfile {
   final String? profileImage;
   final double? latitude;
   final double? longitude;
+  final String? locationName;
   final bool isOnline;
 
   const StaffProfile({
@@ -16,6 +17,7 @@ class StaffProfile {
     this.profileImage,
     this.latitude,
     this.longitude,
+    this.locationName,
     required this.isOnline,
   });
 }

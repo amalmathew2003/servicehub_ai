@@ -9,6 +9,7 @@ class StaffProfileModel extends StaffProfile {
     super.profileImage,
     super.latitude,
     super.longitude,
+    super.locationName,
     required super.isOnline,
   });
 
@@ -21,6 +22,7 @@ class StaffProfileModel extends StaffProfile {
       profileImage: map['profileImage'],
       latitude: map['latitude']?.toDouble(),
       longitude: map['longitude']?.toDouble(),
+      locationName: map['locationName'],
       isOnline: map['isOnline'] ?? false,
     );
   }
@@ -34,6 +36,7 @@ class StaffProfileModel extends StaffProfile {
       'profileImage': profileImage,
       'latitude': latitude,
       'longitude': longitude,
+      'locationName': locationName,
       'isOnline': isOnline,
     };
   }

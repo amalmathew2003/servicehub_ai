@@ -6,11 +6,17 @@ import '../models/staff_profile_model.dart';
 class StaffProfileRepositoryImpl implements StaffProfileRepository {
   final StaffProfileDatasource datasource;
 
-  StaffProfileRepositoryImpl({required this.datasource});
+  StaffProfileRepositoryImpl({
+    required this.datasource,
+  });
 
   @override
-  Future<StaffProfile?> getStaffProfile({required String staffUid}) async {
-    return await datasource.getStaffProfile(staffUid: staffUid);
+  Future<StaffProfile?> getStaffProfile({
+    required String staffUid,
+  }) async {
+    return await datasource.getStaffProfile(
+      staffUid: staffUid,
+    );
   }
 
   @override
@@ -26,9 +32,13 @@ class StaffProfileRepositoryImpl implements StaffProfileRepository {
       profileImage: profile.profileImage,
       latitude: profile.latitude,
       longitude: profile.longitude,
+      locationName: profile.locationName,
       isOnline: profile.isOnline,
     );
 
-    await datasource.updateStaffProfile(staffUid: staffUid, profile: model);
+    await datasource.updateStaffProfile(
+      staffUid: staffUid,
+      profile: model,
+    );
   }
 }

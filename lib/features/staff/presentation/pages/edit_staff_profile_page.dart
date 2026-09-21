@@ -216,7 +216,6 @@ class _EditStaffProfilePageState extends State<EditStaffProfilePage> {
                                       icon: const Icon(Icons.camera_alt_rounded,
                                           size: 18, color: Colors.white),
                                       onPressed: () {
-                                        // TODO: image picker
                                       },
                                     ),
                                   ),
