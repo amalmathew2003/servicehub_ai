@@ -10,7 +10,7 @@ import '../bloc/auth_state.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/role_chip.dart';
 import '../../../../features/staff/presentation/pages/staff_main_page.dart';
-import 'home_placeholder_page.dart';
+import '../../../../features/user/presentation/pages/user_main_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
             final role = state.user.role;
             final destination = role == 'staff'
                 ? const StaffMainPage()
-                : const HomePlaceholderPage();
+                : const UserMainPage();
             Navigator.pushReplacement(
               context,
               PageRouteBuilder(

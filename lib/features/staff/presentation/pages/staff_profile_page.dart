@@ -3,11 +3,13 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_event.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 import '../bloc/staff_profile_bloc.dart';
+import '../bloc/staff_profile_event.dart';
 import '../bloc/staff_profile_state.dart';
 import 'edit_staff_profile_page.dart';
 
@@ -53,78 +55,126 @@ class StaffProfilePage extends StatelessWidget {
             final profile = state.profile;
 
             return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 120),
               child: Column(
                 children: [
-                  // Profile Image
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.5),
-                          width: 2,
+                  // Hero Profile Card
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(32),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0.05),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            // Profile Image
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(alpha: 0.5),
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 55,
+                                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                backgroundImage: profile.profileImage != null
+                                    ? NetworkImage(profile.profileImage!)
+                                    : null,
+                                child: profile.profileImage == null
+                                    ? const Icon(
+                                        Icons.person_rounded,
+                                        size: 50,
+                                        color: AppColors.primary,
+                                      )
+                                    : null,
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Name
+                            Text(
+                              profile.name,
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            // Email
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                profile.email,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textLightSecondary.withValues(alpha: 0.9),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: CircleAvatar(
-                        radius: 55,
-                        backgroundColor: AppColors.primary.withValues(
-                          alpha: 0.1,
-                        ),
-                        backgroundImage: profile.profileImage != null
-                            ? NetworkImage(profile.profileImage!)
-                            : null,
-                        child: profile.profileImage == null
-                            ? const Icon(
-                                Icons.person_rounded,
-                                size: 50,
-                                color: AppColors.primary,
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Name
-                  Text(
-                    profile.name,
-                    style: const TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Email
-                  Text(
-                    profile.email,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textLightSecondary.withValues(
-                        alpha: 0.8,
-                      ),
-                      letterSpacing: 0.5,
                     ),
                   ),
 
                   const SizedBox(height: 36),
+
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'ACCOUNT DETAILS',
+                      style: TextStyle(
+                        color: AppColors.textLightSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
 
                   // Profile Information
                   _ProfileItem(
                     icon: Icons.person_outline_rounded,
                     title: 'Name',
                     value: profile.name,
-                  ),
-
-                  _ProfileItem(
-                    icon: Icons.email_outlined,
-                    title: 'Email',
-                    value: profile.email,
                   ),
 
                   _ProfileItem(
@@ -137,9 +187,7 @@ class StaffProfilePage extends StatelessWidget {
                     longitude: profile.longitude,
                   ),
 
-                  const SizedBox(height: 24),
-
-
+                  const SizedBox(height: 32),
 
                   // Edit Profile Button
                   Container(
@@ -192,6 +240,39 @@ class StaffProfilePage extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Sign Out Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        context.read<AuthBloc>().add(const LogoutRequested());
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        side: BorderSide(
+                          color: Colors.redAccent.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: const Icon(Icons.logout_rounded, size: 20),
+                      label: const Text(
+                        'Sign Out',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 30),
                 ],
               ),
@@ -359,3 +440,4 @@ class _LocationProfileItem extends StatelessWidget {
     );
   }
 }
+

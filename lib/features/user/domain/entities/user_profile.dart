@@ -21,6 +21,28 @@ class UserProfile extends Equatable {
     this.locationName,
   });
 
+  UserProfile copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? phone,
+    String? profileImage,
+    double? latitude,
+    double? longitude,
+    String? locationName,
+  }) {
+    return UserProfile(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      profileImage: profileImage ?? this.profileImage,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationName: locationName ?? this.locationName,
+    );
+  }
+
   @override
   List<Object?> get props => [
         uid,

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../features/staff/presentation/pages/staff_main_page.dart';
+import '../../../../features/user/presentation/pages/user_main_page.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'home_placeholder_page.dart';
 import 'login_page.dart';
 
 class AuthGate extends StatefulWidget {
@@ -48,7 +48,7 @@ class _AuthGateState extends State<AuthGate> {
             return const StaffMainPage();
           }
 
-          return const HomePlaceholderPage();
+          return const UserMainPage();
         }
 
         return const LoginPage();

@@ -24,65 +24,49 @@ class StaffHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-  return MultiBlocProvider(
-  providers: [
-    BlocProvider<StaffServiceBloc>(
-      create: (_) {
-        final bloc = sl<StaffServiceBloc>();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<StaffServiceBloc>(
+          create: (_) {
+            final bloc = sl<StaffServiceBloc>();
 
-        if (user != null) {
-          bloc.add(
-            LoadStaffServices(
-              staffUid: user.uid,
-            ),
-          );
-        }
+            if (user != null) {
+              bloc.add(LoadStaffServices(staffUid: user.uid));
+            }
 
-        return bloc;
-      },
-    ),
+            return bloc;
+          },
+        ),
 
-    BlocProvider<StaffProfileBloc>(
-      create: (_) {
-        final bloc = sl<StaffProfileBloc>();
+        BlocProvider<StaffProfileBloc>(
+          create: (_) {
+            final bloc = sl<StaffProfileBloc>();
 
-        if (user != null) {
-          bloc.add(
-            LoadStaffProfile(
-              staffUid: user.uid,
-            ),
-          );
+            if (user != null) {
+              bloc.add(LoadStaffProfile(staffUid: user.uid));
 
-          bloc.add(
-            UpdateStaffLocationRequested(
-              staffUid: user.uid,
-            ),
-          );
-        }
+              bloc.add(UpdateStaffLocationRequested(staffUid: user.uid));
+            }
 
-        return bloc;
-      },
-    ),
+            return bloc;
+          },
+        ),
 
-    // BOOKING
-    BlocProvider<BookingBloc>(
-      create: (_) {
-        final bloc = sl<BookingBloc>();
+        // BOOKING
+        BlocProvider<BookingBloc>(
+          create: (_) {
+            final bloc = sl<BookingBloc>();
 
-        if (user != null) {
-          bloc.add(
-            LoadStaffBookingsRequested(
-              staffId: user.uid,
-            ),
-          );
-        }
+            if (user != null) {
+              bloc.add(LoadStaffBookingsRequested(staffId: user.uid));
+            }
 
-        return bloc;
-      },
-    ),
-  ],
-  child: const _StaffHomeView(),
-);
+            return bloc;
+          },
+        ),
+      ],
+      child: const _StaffHomeView(),
+    );
   }
 }
 
@@ -106,28 +90,48 @@ class _StaffHomeView extends StatelessWidget {
     return BlocListener<StaffServiceBloc, StaffServiceState>(
       listener: (context, state) {
         if (state is StaffServiceAdded) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: AppColors.surface,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            content: const Row(children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.primary),
-              SizedBox(width: 12),
-              Text('Service added!', style: TextStyle(color: AppColors.textLight)),
-            ]),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.surface,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: AppColors.primary),
+                  SizedBox(width: 12),
+                  Text(
+                    'Service added!',
+                    style: TextStyle(color: AppColors.textLight),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
         if (state is StaffServiceError) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: AppColors.surface,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            content: Row(children: [
-              const Icon(Icons.error_rounded, color: Colors.redAccent),
-              const SizedBox(width: 12),
-              Expanded(child: Text(state.message, style: const TextStyle(color: AppColors.textLight))),
-            ]),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.surface,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_rounded, color: Colors.redAccent),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(color: AppColors.textLight),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
       },
       child: Scaffold(
@@ -135,7 +139,10 @@ class _StaffHomeView extends StatelessWidget {
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 100),
-          child: Builder(builder: (ctx) => _GlowFab(onPressed: () => _showAddServiceDialog(ctx))),
+          child: Builder(
+            builder: (ctx) =>
+                _GlowFab(onPressed: () => _showAddServiceDialog(ctx)),
+          ),
         ),
         body: SafeArea(
           child: CustomScrollView(
@@ -150,22 +157,37 @@ class _StaffHomeView extends StatelessWidget {
                       // Avatar with profile image
                       BlocBuilder<StaffProfileBloc, StaffProfileState>(
                         builder: (context, state) {
-                          final imageUrl = state is StaffProfileLoaded ? state.profile.profileImage : null;
+                          final imageUrl = state is StaffProfileLoaded
+                              ? state.profile.profileImage
+                              : null;
                           return Container(
-                            width: 50, height: 50,
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.primary.withValues(alpha: 0.15),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.5),
+                                width: 2,
+                              ),
                               image: imageUrl != null
-                                  ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
+                                  ? DecorationImage(
+                                      image: NetworkImage(imageUrl),
+                                      fit: BoxFit.cover,
+                                    )
                                   : null,
                             ),
                             child: imageUrl == null
-                                ? Center(child: Text(
-                                    displayName[0].toUpperCase(),
-                                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 20),
-                                  ))
+                                ? Center(
+                                    child: Text(
+                                      displayName[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  )
                                 : null,
                           );
                         },
@@ -176,30 +198,53 @@ class _StaffHomeView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_greeting(), style: const TextStyle(color: AppColors.textLightSecondary, fontSize: 12)),
-                            Text(displayName, style: const TextStyle(color: AppColors.textLight, fontSize: 20, fontWeight: FontWeight.w800, height: 1.2)),
+                            Text(
+                              _greeting(),
+                              style: const TextStyle(
+                                color: AppColors.textLightSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              displayName,
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       // Status pill
                       BlocBuilder<StaffProfileBloc, StaffProfileState>(
                         builder: (context, profileState) {
-                          final isOnline = profileState is StaffProfileLoaded ? profileState.profile.isOnline : false;
+                          final isOnline = profileState is StaffProfileLoaded
+                              ? profileState.profile.isOnline
+                              : false;
                           return GestureDetector(
                             onTap: () {
                               if (profileState is! StaffProfileLoaded) return;
                               final profile = profileState.profile;
                               final u = FirebaseAuth.instance.currentUser;
                               if (u == null) return;
-                              context.read<StaffProfileBloc>().add(UpdateStaffProfileRequested(
-                                staffUid: u.uid, isSilent: true,
-                                profile: StaffProfile(
-                                  uid: profile.uid, name: profile.name, email: profile.email,
-                                  phone: profile.phone, profileImage: profile.profileImage,
-                                  latitude: profile.latitude, longitude: profile.longitude,
-                                  isOnline: !isOnline,
+                              context.read<StaffProfileBloc>().add(
+                                UpdateStaffProfileRequested(
+                                  staffUid: u.uid,
+                                  isSilent: true,
+                                  profile: StaffProfile(
+                                    uid: profile.uid,
+                                    name: profile.name,
+                                    email: profile.email,
+                                    phone: profile.phone,
+                                    profileImage: profile.profileImage,
+                                    latitude: profile.latitude,
+                                    longitude: profile.longitude,
+                                    isOnline: !isOnline,
+                                  ),
                                 ),
-                              ));
+                              );
                             },
                             child: _StatusPill(isOnline: isOnline),
                           );
@@ -216,8 +261,12 @@ class _StaffHomeView extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: BlocBuilder<StaffProfileBloc, StaffProfileState>(
                     builder: (context, state) {
-                      final isOnline = state is StaffProfileLoaded ? state.profile.isOnline : false;
-                      final locationName = state is StaffProfileLoaded ? (state.profile.locationName ?? '') : '';
+                      final isOnline = state is StaffProfileLoaded
+                          ? state.profile.isOnline
+                          : false;
+                      final locationName = state is StaffProfileLoaded
+                          ? (state.profile.locationName ?? '')
+                          : '';
                       const activeColor = Color(0xFF00E676);
                       return GestureDetector(
                         onTap: () {
@@ -225,15 +274,22 @@ class _StaffHomeView extends StatelessWidget {
                           final profile = state.profile;
                           final u = FirebaseAuth.instance.currentUser;
                           if (u == null) return;
-                          context.read<StaffProfileBloc>().add(UpdateStaffProfileRequested(
-                            staffUid: u.uid, isSilent: true,
-                            profile: StaffProfile(
-                              uid: profile.uid, name: profile.name, email: profile.email,
-                              phone: profile.phone, profileImage: profile.profileImage,
-                              latitude: profile.latitude, longitude: profile.longitude,
-                              isOnline: !isOnline,
+                          context.read<StaffProfileBloc>().add(
+                            UpdateStaffProfileRequested(
+                              staffUid: u.uid,
+                              isSilent: true,
+                              profile: StaffProfile(
+                                uid: profile.uid,
+                                name: profile.name,
+                                email: profile.email,
+                                phone: profile.phone,
+                                profileImage: profile.profileImage,
+                                latitude: profile.latitude,
+                                longitude: profile.longitude,
+                                isOnline: !isOnline,
+                              ),
                             ),
-                          ));
+                          );
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(24),
@@ -249,64 +305,111 @@ class _StaffHomeView extends StatelessWidget {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: isOnline
-                                      ? [activeColor.withValues(alpha: 0.12), activeColor.withValues(alpha: 0.04)]
-                                      : [Colors.white.withValues(alpha: 0.05), Colors.white.withValues(alpha: 0.02)],
+                                      ? [
+                                          activeColor.withValues(alpha: 0.12),
+                                          activeColor.withValues(alpha: 0.04),
+                                        ]
+                                      : [
+                                          Colors.white.withValues(alpha: 0.05),
+                                          Colors.white.withValues(alpha: 0.02),
+                                        ],
                                 ),
                                 border: Border.all(
-                                  color: isOnline ? activeColor.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.08),
+                                  color: isOnline
+                                      ? activeColor.withValues(alpha: 0.35)
+                                      : Colors.white.withValues(alpha: 0.08),
                                   width: 1.5,
                                 ),
-                                boxShadow: isOnline ? [
-                                  BoxShadow(color: activeColor.withValues(alpha: 0.12), blurRadius: 30, spreadRadius: -5, offset: const Offset(0, 8)),
-                                ] : [],
+                                boxShadow: isOnline
+                                    ? [
+                                        BoxShadow(
+                                          color: activeColor.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          blurRadius: 30,
+                                          spreadRadius: -5,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ]
+                                    : [],
                               ),
                               child: Row(
                                 children: [
                                   AnimatedContainer(
                                     duration: const Duration(milliseconds: 400),
-                                    width: 52, height: 52,
+                                    width: 52,
+                                    height: 52,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: isOnline ? activeColor.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.06),
+                                      color: isOnline
+                                          ? activeColor.withValues(alpha: 0.15)
+                                          : Colors.white.withValues(
+                                              alpha: 0.06,
+                                            ),
                                       border: Border.all(
-                                        color: isOnline ? activeColor.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.1),
+                                        color: isOnline
+                                            ? activeColor.withValues(alpha: 0.4)
+                                            : Colors.white.withValues(
+                                                alpha: 0.1,
+                                              ),
                                       ),
                                     ),
                                     child: Icon(
-                                      isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
-                                      color: isOnline ? activeColor : AppColors.textLightSecondary,
+                                      isOnline
+                                          ? Icons.wifi_rounded
+                                          : Icons.wifi_off_rounded,
+                                      color: isOnline
+                                          ? activeColor
+                                          : AppColors.textLightSecondary,
                                       size: 24,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 300),
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
                                           child: Text(
-                                            isOnline ? 'Available for Bookings' : 'Currently Offline',
+                                            isOnline
+                                                ? 'Available for Bookings'
+                                                : 'Currently Offline',
                                             key: ValueKey(isOnline),
                                             style: TextStyle(
-                                              color: isOnline ? activeColor : AppColors.textLightSecondary,
-                                              fontSize: 15, fontWeight: FontWeight.w700,
+                                              color: isOnline
+                                                  ? activeColor
+                                                  : AppColors
+                                                        .textLightSecondary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           isOnline
-                                              ? (locationName.isNotEmpty ? '📍 $locationName' : 'Tap here to go offline')
+                                              ? (locationName.isNotEmpty
+                                                    ? '📍 $locationName'
+                                                    : 'Tap here to go offline')
                                               : 'Tap here to go online',
-                                          style: const TextStyle(color: AppColors.textLightSecondary, fontSize: 12),
+                                          style: const TextStyle(
+                                            color: AppColors.textLightSecondary,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Icon(
                                     Icons.power_settings_new_rounded,
-                                    color: isOnline ? activeColor.withValues(alpha: 0.6) : AppColors.textLightSecondary.withValues(alpha: 0.4),
+                                    color: isOnline
+                                        ? activeColor.withValues(alpha: 0.6)
+                                        : AppColors.textLightSecondary
+                                              .withValues(alpha: 0.4),
                                   ),
                                 ],
                               ),
@@ -324,48 +427,47 @@ class _StaffHomeView extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                   child: BlocBuilder<StaffServiceBloc, StaffServiceState>(
-  builder: (context, serviceState) {
-    final serviceCount =
-        serviceState is StaffServicesLoaded
-            ? serviceState.services.length
-            : 0;
+                    builder: (context, serviceState) {
+                      final serviceCount = serviceState is StaffServicesLoaded
+                          ? serviceState.services.length
+                          : 0;
 
-    return BlocBuilder<BookingBloc, BookingState>(
-      builder: (context, bookingState) {
-        final bookingCount =
-            bookingState is StaffBookingsLoaded
-                ? bookingState.bookings.length
-                : 0;
+                      return BlocBuilder<BookingBloc, BookingState>(
+                        builder: (context, bookingState) {
+                          final bookingCount =
+                              bookingState is StaffBookingsLoaded
+                              ? bookingState.bookings.length
+                              : 0;
 
-        return Row(
-          children: [
-            _StatCard(
-              label: 'Services',
-              value: serviceCount.toString(),
-              icon: Icons.build_rounded,
-            ),
+                          return Row(
+                            children: [
+                              _StatCard(
+                                label: 'Services',
+                                value: serviceCount.toString(),
+                                icon: Icons.build_rounded,
+                              ),
 
-            const SizedBox(width: 12),
+                              const SizedBox(width: 12),
 
-            _StatCard(
-              label: 'Bookings',
-              value: bookingCount.toString(),
-              icon: Icons.calendar_month_rounded,
-            ),
+                              _StatCard(
+                                label: 'Bookings',
+                                value: bookingCount.toString(),
+                                icon: Icons.calendar_month_rounded,
+                              ),
 
-            const SizedBox(width: 12),
+                              const SizedBox(width: 12),
 
-            _StatCard(
-              label: 'Rating',
-              value: '—',
-              icon: Icons.star_rounded,
-            ),
-          ],
-        );
-      },
-    );
-  },
-),
+                              _StatCard(
+                                label: 'Rating',
+                                value: '—',
+                                icon: Icons.star_rounded,
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
 
@@ -377,7 +479,9 @@ class _StaffHomeView extends StatelessWidget {
                     'MY SERVICES',
                     style: TextStyle(
                       color: AppColors.textLightSecondary,
-                      fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ),
@@ -406,11 +510,14 @@ class _StaffHomeView extends StatelessWidget {
       transitionBuilder: (ctx, anim, _, child) => FadeTransition(
         opacity: anim,
         child: ScaleTransition(
-          scale: Tween<double>(begin: 0.92, end: 1.0).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          scale: Tween<double>(
+            begin: 0.92,
+            end: 1.0,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
           child: child,
         ),
       ),
-      pageBuilder: (ctx, _, __) => Center(
+      pageBuilder: (ctx, _, _) => Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: ClipRRect(
@@ -421,7 +528,9 @@ class _StaffHomeView extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.07),
+                  ),
                 ),
                 padding: const EdgeInsets.all(28),
                 child: Material(
@@ -430,57 +539,116 @@ class _StaffHomeView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        const Text('Add New Service', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.w800)),
-                      ]),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppColors.primary,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          const Text(
+                            'Add New Service',
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 24),
-                      _DialogTextField(controller: nameController, label: 'Service Name', hint: 'e.g. AC Repair, Plumbing', icon: Icons.build_rounded),
+                      _DialogTextField(
+                        controller: nameController,
+                        label: 'Service Name',
+                        hint: 'e.g. AC Repair, Plumbing',
+                        icon: Icons.build_rounded,
+                      ),
                       const SizedBox(height: 16),
-                      _DialogTextField(controller: descriptionController, label: 'Description', hint: 'Describe what you offer...', icon: Icons.description_rounded, maxLines: 3),
+                      _DialogTextField(
+                        controller: descriptionController,
+                        label: 'Description',
+                        hint: 'Describe what you offer...',
+                        icon: Icons.description_rounded,
+                        maxLines: 3,
+                      ),
                       const SizedBox(height: 28),
-                      Row(children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.textLightSecondary,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppColors.borderLight)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.textLightSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(
+                                    color: AppColors.borderLight,
+                                  ),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
-                            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final name = nameController.text.trim();
-                              final description = descriptionController.text.trim();
-                              if (name.isEmpty) return;
-                              final u = FirebaseAuth.instance.currentUser;
-                              if (u == null) return;
-                              context.read<StaffServiceBloc>().add(AddStaffServiceRequested(
-                                staffUid: u.uid,
-                                service: StaffService(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, description: description),
-                              ));
-                              Navigator.pop(ctx);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final name = nameController.text.trim();
+                                final description = descriptionController.text
+                                    .trim();
+                                if (name.isEmpty) return;
+                                final u = FirebaseAuth.instance.currentUser;
+                                if (u == null) return;
+                                context.read<StaffServiceBloc>().add(
+                                  AddStaffServiceRequested(
+                                    staffUid: u.uid,
+                                    service: StaffService(
+                                      id: DateTime.now().millisecondsSinceEpoch
+                                          .toString(),
+                                      name: name,
+                                      description: description,
+                                    ),
+                                  ),
+                                );
+                                Navigator.pop(ctx);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text(
+                                'Add Service',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
-                            child: const Text('Add Service', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                           ),
-                        ),
-                      ]),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -503,7 +671,9 @@ class _ServicesSliver extends StatelessWidget {
       builder: (context, state) {
         if (state is StaffServiceLoading) {
           return const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           );
         }
         if (state is StaffServicesLoaded && state.services.isNotEmpty) {
@@ -527,19 +697,39 @@ class _ServicesSliver extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 80, height: 80,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                    ),
                   ),
-                  child: const Icon(Icons.build_rounded, color: AppColors.primary, size: 36),
+                  child: const Icon(
+                    Icons.build_rounded,
+                    color: AppColors.primary,
+                    size: 36,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                const Text('No services yet', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.w700)),
+                const Text(
+                  'No services yet',
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                const Text('Tap + to add your first service', textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textLightSecondary, fontSize: 14)),
+                const Text(
+                  'Tap + to add your first service',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textLightSecondary,
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
@@ -548,7 +738,6 @@ class _ServicesSliver extends StatelessWidget {
     );
   }
 }
-
 
 // ─── Service Card ────────────────────────────────────────────────────────────
 
@@ -897,8 +1086,8 @@ class _StatusPillState extends State<_StatusPill>
   Widget build(BuildContext context) {
     final isOnline = widget.isOnline;
 
-    final activeColor = const Color(0xFF00E676);       // bright green
-    final inactiveColor = const Color(0xFF757575);     // grey
+    final activeColor = const Color(0xFF00E676); // bright green
+    final inactiveColor = const Color(0xFF757575); // grey
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -951,7 +1140,9 @@ class _StatusPillState extends State<_StatusPill>
                   color: activeColor.withValues(alpha: _pulseAnimation.value),
                   boxShadow: [
                     BoxShadow(
-                      color: activeColor.withValues(alpha: _pulseAnimation.value * 0.6),
+                      color: activeColor.withValues(
+                        alpha: _pulseAnimation.value * 0.6,
+                      ),
                       blurRadius: 6,
                       spreadRadius: 1,
                     ),

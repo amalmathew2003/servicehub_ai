@@ -8,8 +8,8 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/role_chip.dart';
-import '../../../../features/staff/presentation/pages/staff_home_page.dart';
-import 'home_placeholder_page.dart';
+import '../../../../features/staff/presentation/pages/staff_main_page.dart';
+import '../../../../features/user/presentation/pages/user_main_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -94,8 +94,8 @@ class _RegisterPageState extends State<RegisterPage> {
           if (state is AuthAuthenticated) {
             final role = state.user.role;
             final destination = role == 'staff'
-                ? const StaffHomePage()
-                : const HomePlaceholderPage();
+                ? const StaffMainPage()
+                : const UserMainPage();
             Navigator.pushReplacement(
               context,
               PageRouteBuilder(
