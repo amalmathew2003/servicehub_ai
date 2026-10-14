@@ -4,19 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:service_hub_ai/core/service/service_locator.dart';
+import 'package:service_hub_ai/core/theme/app_colors.dart';
 import 'package:service_hub_ai/features/booking/presentation/bloc/booking_bloc.dart';
 import 'package:service_hub_ai/features/booking/presentation/bloc/booking_event.dart';
 import 'package:service_hub_ai/features/booking/presentation/bloc/booking_state.dart';
 import 'package:service_hub_ai/features/staff/domain/entities/staff_profile.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_bloc.dart';
 import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_event.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_profile_state.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_service_bloc.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_service_event.dart';
+import 'package:service_hub_ai/features/staff/presentation/bloc/staff_service_state.dart';
+import 'package:service_hub_ai/features/staff/presentation/widgets/add_staff_service_dialog.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/staff_service.dart';
-import '../bloc/staff_service_bloc.dart';
-import '../bloc/staff_service_event.dart';
-import '../bloc/staff_service_state.dart';
-import '../bloc/staff_profile_bloc.dart';
-import '../bloc/staff_profile_state.dart';
 
 class StaffHomePage extends StatelessWidget {
   const StaffHomePage({super.key});
@@ -24,6 +25,7 @@ class StaffHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<StaffServiceBloc>(
@@ -37,22 +39,18 @@ class StaffHomePage extends StatelessWidget {
             return bloc;
           },
         ),
-
         BlocProvider<StaffProfileBloc>(
           create: (_) {
             final bloc = sl<StaffProfileBloc>();
 
             if (user != null) {
               bloc.add(LoadStaffProfile(staffUid: user.uid));
-
               bloc.add(UpdateStaffLocationRequested(staffUid: user.uid));
             }
 
             return bloc;
           },
         ),
-
-        // BOOKING
         BlocProvider<BookingBloc>(
           create: (_) {
             final bloc = sl<BookingBloc>();
@@ -75,14 +73,17 @@ class _StaffHomeView extends StatelessWidget {
 
   String _greeting() {
     final hour = DateTime.now().hour;
+
     if (hour < 12) return 'Good morning,';
     if (hour < 17) return 'Good afternoon,';
+
     return 'Good evening,';
   }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
     final displayName = user?.displayName?.isNotEmpty == true
         ? user!.displayName!.split(' ').first
         : (user?.email?.split('@').first ?? 'Staff');
@@ -110,6 +111,7 @@ class _StaffHomeView extends StatelessWidget {
             ),
           );
         }
+
         if (state is StaffServiceError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -148,18 +150,18 @@ class _StaffHomeView extends StatelessWidget {
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // ── HEADER ───────────────────────────────────────────────
+              // HEADER
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                   child: Row(
                     children: [
-                      // Avatar with profile image
                       BlocBuilder<StaffProfileBloc, StaffProfileState>(
                         builder: (context, state) {
                           final imageUrl = state is StaffProfileLoaded
                               ? state.profile.profileImage
                               : null;
+
                           return Container(
                             width: 50,
                             height: 50,
@@ -180,7 +182,9 @@ class _StaffHomeView extends StatelessWidget {
                             child: imageUrl == null
                                 ? Center(
                                     child: Text(
-                                      displayName[0].toUpperCase(),
+                                      displayName.isNotEmpty
+                                          ? displayName[0].toUpperCase()
+                                          : 'S',
                                       style: const TextStyle(
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w800,
@@ -193,7 +197,6 @@ class _StaffHomeView extends StatelessWidget {
                         },
                       ),
                       const SizedBox(width: 14),
-                      // Greeting
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,21 +220,25 @@ class _StaffHomeView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Status pill
                       BlocBuilder<StaffProfileBloc, StaffProfileState>(
                         builder: (context, profileState) {
                           final isOnline = profileState is StaffProfileLoaded
                               ? profileState.profile.isOnline
                               : false;
+
                           return GestureDetector(
                             onTap: () {
                               if (profileState is! StaffProfileLoaded) return;
+
                               final profile = profileState.profile;
-                              final u = FirebaseAuth.instance.currentUser;
-                              if (u == null) return;
+                              final currentUser =
+                                  FirebaseAuth.instance.currentUser;
+
+                              if (currentUser == null) return;
+
                               context.read<StaffProfileBloc>().add(
                                 UpdateStaffProfileRequested(
-                                  staffUid: u.uid,
+                                  staffUid: currentUser.uid,
                                   isSilent: true,
                                   profile: StaffProfile(
                                     uid: profile.uid,
@@ -255,7 +262,7 @@ class _StaffHomeView extends StatelessWidget {
                 ),
               ),
 
-              // ── HERO AVAILABILITY CARD ────────────────────────────────
+              // AVAILABILITY CARD
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -264,19 +271,25 @@ class _StaffHomeView extends StatelessWidget {
                       final isOnline = state is StaffProfileLoaded
                           ? state.profile.isOnline
                           : false;
+
                       final locationName = state is StaffProfileLoaded
                           ? (state.profile.locationName ?? '')
                           : '';
+
                       const activeColor = Color(0xFF00E676);
+
                       return GestureDetector(
                         onTap: () {
                           if (state is! StaffProfileLoaded) return;
+
                           final profile = state.profile;
-                          final u = FirebaseAuth.instance.currentUser;
-                          if (u == null) return;
+                          final currentUser = FirebaseAuth.instance.currentUser;
+
+                          if (currentUser == null) return;
+
                           context.read<StaffProfileBloc>().add(
                             UpdateStaffProfileRequested(
-                              staffUid: u.uid,
+                              staffUid: currentUser.uid,
                               isSilent: true,
                               profile: StaffProfile(
                                 uid: profile.uid,
@@ -422,7 +435,7 @@ class _StaffHomeView extends StatelessWidget {
                 ),
               ),
 
-              // ── STATS ROW ─────────────────────────────────────────────
+              // STATISTICS
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -446,17 +459,13 @@ class _StaffHomeView extends StatelessWidget {
                                 value: serviceCount.toString(),
                                 icon: Icons.build_rounded,
                               ),
-
                               const SizedBox(width: 12),
-
                               _StatCard(
                                 label: 'Bookings',
                                 value: bookingCount.toString(),
                                 icon: Icons.calendar_month_rounded,
                               ),
-
                               const SizedBox(width: 12),
-
                               _StatCard(
                                 label: 'Rating',
                                 value: '—',
@@ -471,7 +480,7 @@ class _StaffHomeView extends StatelessWidget {
                 ),
               ),
 
-              // ── SECTION HEADER ────────────────────────────────────────
+              // SERVICES HEADING
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(24, 28, 24, 12),
@@ -487,7 +496,7 @@ class _StaffHomeView extends StatelessWidget {
                 ),
               ),
 
-              // ── SERVICES LIST ─────────────────────────────────────────
+              // SERVICES LIST
               const _ServicesSliver(),
 
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -498,169 +507,37 @@ class _StaffHomeView extends StatelessWidget {
     );
   }
 
+  // Opens the separate AI-powered add-services widget.
   void _showAddServiceDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-    showGeneralDialog(
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to add services.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Reuse the same StaffServiceBloc inside the dialog route.
+    final serviceBloc = context.read<StaffServiceBloc>();
+
+    showDialog<void>(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Dismiss',
-      barrierColor: Colors.black.withValues(alpha: 0.6),
-      transitionDuration: const Duration(milliseconds: 350),
-      transitionBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: anim,
-        child: ScaleTransition(
-          scale: Tween<double>(
-            begin: 0.92,
-            end: 1.0,
-          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-          child: child,
-        ),
-      ),
-      pageBuilder: (ctx, _, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.07),
-                  ),
-                ),
-                padding: const EdgeInsets.all(28),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.add_rounded,
-                              color: AppColors.primary,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          const Text(
-                            'Add New Service',
-                            style: TextStyle(
-                              color: AppColors.textLight,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _DialogTextField(
-                        controller: nameController,
-                        label: 'Service Name',
-                        hint: 'e.g. AC Repair, Plumbing',
-                        icon: Icons.build_rounded,
-                      ),
-                      const SizedBox(height: 16),
-                      _DialogTextField(
-                        controller: descriptionController,
-                        label: 'Description',
-                        hint: 'Describe what you offer...',
-                        icon: Icons.description_rounded,
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 28),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.textLightSecondary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(
-                                    color: AppColors.borderLight,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                final name = nameController.text.trim();
-                                final description = descriptionController.text
-                                    .trim();
-                                if (name.isEmpty) return;
-                                final u = FirebaseAuth.instance.currentUser;
-                                if (u == null) return;
-                                context.read<StaffServiceBloc>().add(
-                                  AddStaffServiceRequested(
-                                    staffUid: u.uid,
-                                    service: StaffService(
-                                      id: DateTime.now().millisecondsSinceEpoch
-                                          .toString(),
-                                      name: name,
-                                      description: description,
-                                    ),
-                                  ),
-                                );
-                                Navigator.pop(ctx);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text(
-                                'Add Service',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      barrierDismissible: false,
+      builder: (_) => BlocProvider.value(
+        value: serviceBloc,
+        child: AddStaffServiceDialog(staffUid: user.uid),
       ),
     );
   }
 }
-// ─── Services Sliver ─────────────────────────────────────────────────────────
+
+// -----------------------------------------------------------------------------
+// SERVICES SLIVER
+// -----------------------------------------------------------------------------
 
 class _ServicesSliver extends StatelessWidget {
   const _ServicesSliver();
@@ -676,20 +553,21 @@ class _ServicesSliver extends StatelessWidget {
             ),
           );
         }
+
         if (state is StaffServicesLoaded && state.services.isNotEmpty) {
           return SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
             sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _ServiceCard(service: state.services[index]),
-                ),
-                childCount: state.services.length,
-              ),
+                );
+              }, childCount: state.services.length),
             ),
           );
         }
+
         return SliverFillRemaining(
           hasScrollBody: false,
           child: Center(
@@ -739,10 +617,13 @@ class _ServicesSliver extends StatelessWidget {
   }
 }
 
-// ─── Service Card ────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// SERVICE CARD
+// -----------------------------------------------------------------------------
 
 class _ServiceCard extends StatelessWidget {
-  final dynamic service;
+  final StaffService service;
+
   const _ServiceCard({required this.service});
 
   @override
@@ -781,7 +662,6 @@ class _ServiceCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Glowing Icon Container
                 Container(
                   width: 52,
                   height: 52,
@@ -813,8 +693,6 @@ class _ServiceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -846,8 +724,6 @@ class _ServiceCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Chevron
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -870,7 +746,9 @@ class _ServiceCard extends StatelessWidget {
   }
 }
 
-// ─── Stat Card ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// STAT CARD
+// -----------------------------------------------------------------------------
 
 class _StatCard extends StatelessWidget {
   final String label;
@@ -928,64 +806,66 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ─── Dialog Text Field ──────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// STATUS PILL
+// -----------------------------------------------------------------------------
 
-class _DialogTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String hint;
-  final IconData icon;
-  final int maxLines;
+class _StatusPill extends StatelessWidget {
+  final bool isOnline;
 
-  const _DialogTextField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-    required this.icon,
-    this.maxLines = 1,
-  });
+  const _StatusPill({required this.isOnline});
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textLight),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: AppColors.textLightSecondary.withValues(alpha: 0.5),
+    const activeColor = Color(0xFF00E676);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isOnline
+            ? activeColor.withValues(alpha: 0.1)
+            : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isOnline
+              ? activeColor.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.1),
         ),
-        labelStyle: const TextStyle(color: AppColors.textLightSecondary),
-        prefixIcon: Icon(icon, color: AppColors.iconLight, size: 20),
-        filled: true,
-        fillColor: Colors.black.withValues(alpha: 0.15),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isOnline ? activeColor : Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            isOnline ? 'ONLINE' : 'OFFLINE',
+            style: TextStyle(
+              color: isOnline ? activeColor : AppColors.textLightSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.7,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─── Glowing FAB ────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GLOWING FLOATING ACTION BUTTON
+// -----------------------------------------------------------------------------
 
 class _GlowFab extends StatefulWidget {
   final VoidCallback onPressed;
+
   const _GlowFab({required this.onPressed});
 
   @override
@@ -1000,10 +880,12 @@ class _GlowFabState extends State<_GlowFab>
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
     _pulse = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -1020,164 +902,30 @@ class _GlowFabState extends State<_GlowFab>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _pulse,
-      builder: (_, _) {
-        return GestureDetector(
-          onTap: widget.onPressed,
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(
-                    alpha: 0.3 + 0.2 * _pulse.value,
-                  ),
-                  blurRadius: 20 + 10 * _pulse.value,
-                  spreadRadius: 2 + 4 * _pulse.value,
-                ),
-              ],
-            ),
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      builder: (context, child) {
+        final glowOpacity = 0.15 + (_pulse.value * 0.2);
+
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: glowOpacity),
+                blurRadius: 18 + (_pulse.value * 8),
+                spreadRadius: 1 + (_pulse.value * 3),
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: widget.onPressed,
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add_rounded, size: 30),
           ),
         );
       },
-    );
-  }
-}
-
-// ──────────────────────────────────────────────
-// Premium Status Pill
-// ──────────────────────────────────────────────
-
-class _StatusPill extends StatefulWidget {
-  final bool isOnline;
-  const _StatusPill({required this.isOnline});
-
-  @override
-  State<_StatusPill> createState() => _StatusPillState();
-}
-
-class _StatusPillState extends State<_StatusPill>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isOnline = widget.isOnline;
-
-    final activeColor = const Color(0xFF00E676); // bright green
-    final inactiveColor = const Color(0xFF757575); // grey
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        color: isOnline
-            ? activeColor.withValues(alpha: 0.10)
-            : inactiveColor.withValues(alpha: 0.08),
-        border: Border.all(
-          color: isOnline
-              ? activeColor.withValues(alpha: 0.45)
-              : inactiveColor.withValues(alpha: 0.25),
-          width: 1.2,
-        ),
-        boxShadow: isOnline
-            ? [
-                BoxShadow(
-                  color: activeColor.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  spreadRadius: -1,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Power icon
-          Icon(
-            isOnline
-                ? Icons.power_settings_new_rounded
-                : Icons.power_off_outlined,
-            size: 13,
-            color: isOnline ? activeColor : inactiveColor,
-          ),
-          const SizedBox(width: 6),
-
-          // Pulsing dot (only when online)
-          if (isOnline)
-            AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, _) => Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: activeColor.withValues(alpha: _pulseAnimation.value),
-                  boxShadow: [
-                    BoxShadow(
-                      color: activeColor.withValues(
-                        alpha: _pulseAnimation.value * 0.6,
-                      ),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: inactiveColor.withValues(alpha: 0.5),
-              ),
-            ),
-
-          const SizedBox(width: 6),
-
-          // Label
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: Text(
-              isOnline ? 'Online' : 'Offline',
-              key: ValueKey(isOnline),
-              style: TextStyle(
-                color: isOnline ? activeColor : inactiveColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

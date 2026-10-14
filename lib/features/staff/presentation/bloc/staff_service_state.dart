@@ -20,9 +20,7 @@ class StaffServiceLoading extends StaffServiceState {
 class StaffServicesLoaded extends StaffServiceState {
   final List<StaffService> services;
 
-  const StaffServicesLoaded({
-    required this.services,
-  });
+  const StaffServicesLoaded({required this.services});
 
   @override
   List<Object?> get props => [services];
@@ -35,10 +33,34 @@ class StaffServiceAdded extends StaffServiceState {
 class StaffServiceError extends StaffServiceState {
   final String message;
 
-  const StaffServiceError({
-    required this.message,
-  });
+  const StaffServiceError({required this.message});
 
   @override
   List<Object?> get props => [message];
+}
+
+class ServiceSuggestionsLoading extends StaffServiceState {
+  const ServiceSuggestionsLoading();
+}
+
+class ServiceSuggestionsLoaded extends StaffServiceState {
+  final List<String> suggestions;
+
+  const ServiceSuggestionsLoaded({required this.suggestions});
+
+  @override
+  List<Object?> get props => [suggestions];
+}
+
+class StaffServicesBatchSaving extends StaffServiceState {
+  const StaffServicesBatchSaving();
+}
+
+class StaffServicesBatchSaved extends StaffServiceState {
+  final List<StaffService> services;
+
+  const StaffServicesBatchSaved({required this.services});
+
+  @override
+  List<Object?> get props => [services];
 }

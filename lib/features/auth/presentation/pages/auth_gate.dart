@@ -20,9 +20,7 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
 
-    context.read<AuthBloc>().add(
-          const CheckAuthStatus(),
-        );
+    context.read<AuthBloc>().add(const CheckAuthStatus());
   }
 
   @override

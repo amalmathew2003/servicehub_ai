@@ -10,13 +10,29 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  debugPrint('STARTUP 1: Flutter initialized');
 
-  setupDependencies();
+  try {
+    debugPrint('STARTUP 2: Initializing Firebase');
 
-  runApp(const ServiceHubApp());
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    debugPrint('STARTUP 3: Firebase initialized');
+
+    setupDependencies();
+
+    debugPrint('STARTUP 4: Dependencies registered');
+
+    runApp(const ServiceHubApp());
+
+    debugPrint('STARTUP 5: runApp called');
+  } catch (e, stackTrace) {
+    debugPrint('STARTUP ERROR: $e');
+    debugPrintStack(stackTrace: stackTrace);
+    rethrow;
+  }
 }
 
 class ServiceHubApp extends StatelessWidget {
@@ -29,10 +45,7 @@ class ServiceHubApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'ServiceHub',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: Colors.blue,
-        ),
+        theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
         home: const AuthGate(),
       ),
     );

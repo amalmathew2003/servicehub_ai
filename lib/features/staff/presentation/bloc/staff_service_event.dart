@@ -1,3 +1,4 @@
+
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/staff_service.dart';
@@ -29,4 +30,28 @@ class AddStaffServiceRequested extends StaffServiceEvent {
 
   @override
   List<Object?> get props => [staffUid, service];
+}
+
+class FetchServiceSuggestionsRequested extends StaffServiceEvent {
+  final String serviceText;
+
+  const FetchServiceSuggestionsRequested({
+    required this.serviceText,
+  });
+
+  @override
+  List<Object?> get props => [serviceText];
+}
+
+class AddMultipleStaffServicesRequested extends StaffServiceEvent {
+  final String staffUid;
+  final List<StaffService> services;
+
+  const AddMultipleStaffServicesRequested({
+    required this.staffUid,
+    required this.services,
+  });
+
+  @override
+  List<Object?> get props => [staffUid, services];
 }
