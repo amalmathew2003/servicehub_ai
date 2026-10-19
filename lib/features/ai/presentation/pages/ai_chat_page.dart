@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -37,8 +36,7 @@ class _AiChatView extends StatefulWidget {
 }
 
 class _AiChatViewState extends State<_AiChatView> {
-  final TextEditingController _messageController =
-      TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -149,9 +147,7 @@ class _AiChatViewState extends State<_AiChatView> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Speech recognition is not available on this device.',
-          ),
+          content: Text('Speech recognition is not available on this device.'),
         ),
       );
       return;
@@ -177,9 +173,7 @@ class _AiChatViewState extends State<_AiChatView> {
 
           _messageController.value = TextEditingValue(
             text: recognizedText,
-            selection: TextSelection.collapsed(
-              offset: recognizedText.length,
-            ),
+            selection: TextSelection.collapsed(offset: recognizedText.length),
           );
 
           if (result.finalResult) {
@@ -201,11 +195,9 @@ class _AiChatViewState extends State<_AiChatView> {
 
       setState(() => _isListening = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not start microphone: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not start microphone: $e')));
     }
   }
 
@@ -246,19 +238,12 @@ class _AiChatViewState extends State<_AiChatView> {
       _pendingServiceName = null;
       _isSearchingStaff = false;
 
-      _messages.add(
-        ChatMessage(
-          text: text,
-          isAi: false,
-        ),
-      );
+      _messages.add(ChatMessage(text: text, isAi: false));
 
       _messageController.clear();
     });
 
-    context.read<AiBloc>().add(
-          IdentifyServiceRequested(text),
-        );
+    context.read<AiBloc>().add(IdentifyServiceRequested(text));
 
     _scrollToBottom();
   }
@@ -282,13 +267,13 @@ class _AiChatViewState extends State<_AiChatView> {
       if (!mounted) return;
 
       context.read<AiBloc>().add(
-            ConfirmServiceRequested(
-              latitude: position.latitude,
-              longitude: position.longitude,
-              serviceName: serviceName.trim(),
-              radiusKm: 10,
-            ),
-          );
+        ConfirmServiceRequested(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          serviceName: serviceName.trim(),
+          radiusKm: 10,
+        ),
+      );
 
       _scrollToBottom();
     } catch (e) {
@@ -298,11 +283,9 @@ class _AiChatViewState extends State<_AiChatView> {
       String message;
 
       if (error.contains('permanently denied')) {
-        message =
-            'Location permission is permanently denied. Please enable it in your app settings.';
+        message = 'Location permission is permanently denied. Please enable it in your app settings.';
       } else if (error.contains('permission denied')) {
-        message =
-            'Location permission is required to find nearby staff.';
+        message = 'Location permission is required to find nearby staff.';
       } else if (error.contains('service is disabled')) {
         message = 'Please turn on your phone GPS and try again.';
       } else {
@@ -312,12 +295,7 @@ class _AiChatViewState extends State<_AiChatView> {
 
       setState(() {
         _isSearchingStaff = false;
-        _messages.add(
-          ChatMessage(
-            text: message,
-            isAi: true,
-          ),
-        );
+        _messages.add(ChatMessage(text: message, isAi: true));
       });
 
       _scrollToBottom();
@@ -337,11 +315,11 @@ class _AiChatViewState extends State<_AiChatView> {
     }
 
     context.read<AiBloc>().add(
-          SubmitServiceRequestRequested(
-            requestedService: requestedService,
-            description: '',
-          ),
-        );
+      SubmitServiceRequestRequested(
+        requestedService: requestedService,
+        description: '',
+      ),
+    );
   }
 
   // ---------------- BLOC STATES ----------------
@@ -360,8 +338,7 @@ class _AiChatViewState extends State<_AiChatView> {
           ),
         );
 
-        if (state.requiresConfirmation &&
-            state.serviceName != null) {
+        if (state.requiresConfirmation && state.serviceName != null) {
           _pendingServiceName = state.serviceName;
         } else {
           _pendingServiceName = null;
@@ -378,12 +355,7 @@ class _AiChatViewState extends State<_AiChatView> {
         _isSubmittingServiceRequest = false;
         _submittedServiceRequests.add(state.requestedService);
 
-        _messages.add(
-          ChatMessage(
-            text: state.message,
-            isAi: true,
-          ),
-        );
+        _messages.add(ChatMessage(text: state.message, isAi: true));
       });
 
       _scrollToBottom();
@@ -393,11 +365,9 @@ class _AiChatViewState extends State<_AiChatView> {
 
       final staffList = rawStaff is List
           ? rawStaff
-              .whereType<Map>()
-              .map(
-                (item) => Map<String, dynamic>.from(item),
-              )
-              .toList()
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
           : <Map<String, dynamic>>[];
 
       setState(() {
@@ -407,8 +377,7 @@ class _AiChatViewState extends State<_AiChatView> {
         if (staffList.isNotEmpty) {
           _messages.add(
             ChatMessage(
-              text:
-                  'I found ${staffList.length} nearby staff member(s).',
+              text: 'I found ${staffList.length} nearby staff member(s).',
               isAi: true,
               staff: staffList,
             ),
@@ -416,7 +385,7 @@ class _AiChatViewState extends State<_AiChatView> {
         } else {
           _messages.add(
             const ChatMessage(
-              text: 'No nearby staff were found for this service.',
+              text: 'No nearby staff were found for this service. Please try again later.',
               isAi: true,
             ),
           );
@@ -429,12 +398,7 @@ class _AiChatViewState extends State<_AiChatView> {
         _isSearchingStaff = false;
         _isSubmittingServiceRequest = false;
 
-        _messages.add(
-          ChatMessage(
-            text: state.message,
-            isAi: true,
-          ),
-        );
+        _messages.add(ChatMessage(text: state.message, isAi: true));
       });
 
       _scrollToBottom();
@@ -473,9 +437,7 @@ class _AiChatViewState extends State<_AiChatView> {
             SizedBox(width: 10),
             Text(
               'ServiceHub AI',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -485,8 +447,8 @@ class _AiChatViewState extends State<_AiChatView> {
           _handleState(state);
         },
         builder: (context, state) {
-          final isLoading = state is AiLoading ||
-              state is ServiceRequestSubmitting;
+          final isLoading =
+              state is AiLoading || state is ServiceRequestSubmitting;
 
           return Column(
             children: [
@@ -547,10 +509,7 @@ class _AiChatViewState extends State<_AiChatView> {
 
               if (isLoading)
                 const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Row(
@@ -558,16 +517,12 @@ class _AiChatViewState extends State<_AiChatView> {
                         SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 10),
                         Text(
                           'ServiceHub AI is thinking...',
-                          style: TextStyle(
-                            color: Colors.white70,
-                          ),
+                          style: TextStyle(color: Colors.white70),
                         ),
                       ],
                     ),
@@ -576,12 +531,7 @@ class _AiChatViewState extends State<_AiChatView> {
 
               if (_pendingServiceName != null)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    8,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: SuggestedServiceCard(
                     serviceName: _pendingServiceName!,
                     isSearching: _isSearchingStaff,

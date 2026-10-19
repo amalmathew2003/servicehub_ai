@@ -1,23 +1,41 @@
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:service_hub_ai/core/config/api_config.dart';
 
 class AiRemoteDatasource {
   final Dio dio = ApiConfig.dio;
 
   // Identify the requested service.
-  Future<Map<String, dynamic>> identifyService(
-    String message,
-  ) async {
+ 
+Future<Map<String, dynamic>> identifyService(
+  String message,
+) async {
+  try {
+    debugPrint('AI API URL: ${dio.options.baseUrl}/identify-service');
+    debugPrint('AI request message: $message');
+
     final response = await dio.post(
       '/identify-service',
-      data: {
-        'message': message,
-      },
+      data: {'message': message},
     );
 
+    debugPrint('AI API status: ${response.statusCode}');
+    debugPrint('AI API response: ${response.data}');
+
     return Map<String, dynamic>.from(response.data);
+  } on DioException catch (e) {
+    debugPrint('AI API error type: ${e.type}');
+    debugPrint('AI API error message: ${e.message}');
+    debugPrint('AI API status: ${e.response?.statusCode}');
+    debugPrint('AI API error response: ${e.response?.data}');
+    rethrow;
+  } catch (e, stackTrace) {
+    debugPrint('AI unexpected error: $e');
+    debugPrintStack(stackTrace: stackTrace);
+    rethrow;
   }
+}
 
   // Submit a request for an unregistered service.
   Future<Map<String, dynamic>> submitServiceRequest({

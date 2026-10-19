@@ -1,6 +1,8 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:service_hub_ai/core/notification/notification_service.dart';
 
 // AI
 import 'package:service_hub_ai/features/ai/data/datasources/ai_remote_datasource.dart';
@@ -19,6 +21,7 @@ import 'package:service_hub_ai/features/booking/domain/usecases/create_booking.d
 import 'package:service_hub_ai/features/booking/domain/usecases/get_staff_bookings.dart';
 import 'package:service_hub_ai/features/booking/domain/usecases/update_booking_status.dart';
 import 'package:service_hub_ai/features/booking/presentation/bloc/booking_bloc.dart';
+import 'package:service_hub_ai/features/booking/presentation/bloc/customer_booking_bloc.dart';
 
 // Auth
 import '../../features/auth/data/datasources/auth_datasource.dart';
@@ -70,23 +73,34 @@ void setupDependencies() {
   // FIREBASE
   // ============================================================
 
-  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+  sl.registerLazySingleton<FirebaseAuth>(
+    () => FirebaseAuth.instance,
+  );
 
-  sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+  sl.registerLazySingleton<FirebaseFirestore>(
+    () => FirebaseFirestore.instance,
+  );
+
+  // ============================================================
+  // NOTIFICATIONS
+  // ============================================================
+
+  sl.registerLazySingleton<NotificationService>(
+    () => NotificationService(),
+  );
 
   // ============================================================
   // AI FEATURE
   // ============================================================
 
-  // Datasource — register only once.
-  sl.registerLazySingleton<AiRemoteDatasource>(() => AiRemoteDatasource());
+  sl.registerLazySingleton<AiRemoteDatasource>(
+    () => AiRemoteDatasource(),
+  );
 
-  // Repository
   sl.registerLazySingleton<AiRepository>(
     () => AiRepositoryImpl(sl<AiRemoteDatasource>()),
   );
 
-  // Use cases
   sl.registerLazySingleton<IdentifyService>(
     () => IdentifyService(sl<AiRepository>()),
   );
@@ -95,12 +109,10 @@ void setupDependencies() {
     () => SearchNearbyStaff(sl<AiRepository>()),
   );
 
-  // Submit service request use case
   sl.registerLazySingleton<SubmitServiceRequest>(
     () => SubmitServiceRequest(sl<AiRemoteDatasource>()),
   );
 
-  // AI Bloc
   sl.registerFactory<AiBloc>(
     () => AiBloc(
       identifyService: sl<IdentifyService>(),
@@ -113,7 +125,6 @@ void setupDependencies() {
   // AUTH FEATURE
   // ============================================================
 
-  // Datasource
   sl.registerLazySingleton<AuthDatasource>(
     () => AuthDatasource(
       auth: sl<FirebaseAuth>(),
@@ -121,29 +132,32 @@ void setupDependencies() {
     ),
   );
 
-  // Repository
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(datasource: sl<AuthDatasource>()),
+    () => AuthRepositoryImpl(
+      datasource: sl<AuthDatasource>(),
+    ),
   );
 
-  // Use cases
   sl.registerLazySingleton<RegisterUser>(
     () => RegisterUser(sl<AuthRepository>()),
   );
 
-  sl.registerLazySingleton<LoginUser>(() => LoginUser(sl<AuthRepository>()));
+  sl.registerLazySingleton<LoginUser>(
+    () => LoginUser(sl<AuthRepository>()),
+  );
 
   sl.registerLazySingleton<GoogleLogin>(
     () => GoogleLogin(sl<AuthRepository>()),
   );
 
-  sl.registerLazySingleton<LogoutUser>(() => LogoutUser(sl<AuthRepository>()));
+  sl.registerLazySingleton<LogoutUser>(
+    () => LogoutUser(sl<AuthRepository>()),
+  );
 
   sl.registerLazySingleton<GetCurrentUser>(
     () => GetCurrentUser(sl<AuthRepository>()),
   );
 
-  // Auth Bloc
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
       registerUser: sl<RegisterUser>(),
@@ -158,17 +172,18 @@ void setupDependencies() {
   // STAFF SERVICE FEATURE
   // ============================================================
 
-  // Datasource
   sl.registerLazySingleton<StaffServiceDatasource>(
-    () => StaffServiceDatasource(firestore: sl<FirebaseFirestore>()),
+    () => StaffServiceDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
   );
 
-  // Repository
   sl.registerLazySingleton<StaffServiceRepository>(
-    () => StaffServiceRepositoryImpl(datasource: sl<StaffServiceDatasource>()),
+    () => StaffServiceRepositoryImpl(
+      datasource: sl<StaffServiceDatasource>(),
+    ),
   );
 
-  // Use cases
   sl.registerLazySingleton<AddStaffService>(
     () => AddStaffService(sl<StaffServiceRepository>()),
   );
@@ -177,56 +192,62 @@ void setupDependencies() {
     () => GetStaffServices(sl<StaffServiceRepository>()),
   );
 
-  // Staff service Bloc
-// Staff service Bloc
-sl.registerFactory<StaffServiceBloc>(
-  () => StaffServiceBloc(
-    addStaffService: sl<AddStaffService>(),
-    getStaffServices: sl<GetStaffServices>(),
-    aiRemoteDatasource: sl<AiRemoteDatasource>(),
-  ),
-);
+  sl.registerFactory<StaffServiceBloc>(
+    () => StaffServiceBloc(
+      addStaffService: sl<AddStaffService>(),
+      getStaffServices: sl<GetStaffServices>(),
+      aiRemoteDatasource: sl<AiRemoteDatasource>(),
+    ),
+  );
 
   // ============================================================
   // LOCATION FEATURE
   // ============================================================
 
-  // Location service
-  sl.registerLazySingleton<LocationService>(() => LocationService());
-
-  // Repository
-  sl.registerLazySingleton<LocationRepository>(
-    () => LocationRepositoryImpl(locationService: sl<LocationService>()),
+  sl.registerLazySingleton<LocationService>(
+    () => LocationService(),
   );
 
-  // Use cases
+  sl.registerLazySingleton<LocationRepository>(
+    () => LocationRepositoryImpl(
+      locationService: sl<LocationService>(),
+    ),
+  );
+
   sl.registerLazySingleton<GetCurrentLocation>(
-    () => GetCurrentLocation(repository: sl<LocationRepository>()),
+    () => GetCurrentLocation(
+      repository: sl<LocationRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<GetLocationName>(
-    () => GetLocationName(repository: sl<LocationRepository>()),
+    () => GetLocationName(
+      repository: sl<LocationRepository>(),
+    ),
   );
 
   sl.registerLazySingleton<GetLocationStream>(
-    () => GetLocationStream(repository: sl<LocationRepository>()),
+    () => GetLocationStream(
+      repository: sl<LocationRepository>(),
+    ),
   );
 
   // ============================================================
   // STAFF PROFILE FEATURE
   // ============================================================
 
-  // Datasource
   sl.registerLazySingleton<StaffProfileDatasource>(
-    () => StaffProfileDatasource(firestore: sl<FirebaseFirestore>()),
+    () => StaffProfileDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
   );
 
-  // Repository
   sl.registerLazySingleton<StaffProfileRepository>(
-    () => StaffProfileRepositoryImpl(datasource: sl<StaffProfileDatasource>()),
+    () => StaffProfileRepositoryImpl(
+      datasource: sl<StaffProfileDatasource>(),
+    ),
   );
 
-  // Use cases
   sl.registerLazySingleton<GetStaffProfile>(
     () => GetStaffProfile(sl<StaffProfileRepository>()),
   );
@@ -235,7 +256,6 @@ sl.registerFactory<StaffServiceBloc>(
     () => UpdateStaffProfile(sl<StaffProfileRepository>()),
   );
 
-  // Staff profile Bloc
   sl.registerFactory<StaffProfileBloc>(
     () => StaffProfileBloc(
       getStaffProfile: sl<GetStaffProfile>(),
@@ -250,17 +270,18 @@ sl.registerFactory<StaffServiceBloc>(
   // BOOKING FEATURE
   // ============================================================
 
-  // Datasource
   sl.registerLazySingleton<BookingDatasource>(
-    () => BookingDatasource(firestore: sl<FirebaseFirestore>()),
+    () => BookingDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
   );
 
-  // Repository
   sl.registerLazySingleton<BookingRepository>(
-    () => BookingRepositoryImpl(datasource: sl<BookingDatasource>()),
+    () => BookingRepositoryImpl(
+      datasource: sl<BookingDatasource>(),
+    ),
   );
 
-  // Use cases
   sl.registerLazySingleton<CreateBooking>(
     () => CreateBooking(sl<BookingRepository>()),
   );
@@ -273,7 +294,6 @@ sl.registerFactory<StaffServiceBloc>(
     () => UpdateBookingStatus(sl<BookingRepository>()),
   );
 
-  // Booking Bloc
   sl.registerFactory<BookingBloc>(
     () => BookingBloc(
       createBooking: sl<CreateBooking>(),
@@ -282,21 +302,29 @@ sl.registerFactory<StaffServiceBloc>(
     ),
   );
 
+  sl.registerFactory<CustomerBookingBloc>(
+    () => CustomerBookingBloc(
+      getUserProfile: sl<GetUserProfile>(),
+      createBooking: sl<CreateBooking>(),
+    ),
+  );
+
   // ============================================================
   // USER PROFILE FEATURE
   // ============================================================
 
-  // Datasource
   sl.registerLazySingleton<UserProfileDatasource>(
-    () => UserProfileDatasource(firestore: sl<FirebaseFirestore>()),
+    () => UserProfileDatasource(
+      firestore: sl<FirebaseFirestore>(),
+    ),
   );
 
-  // Repository
   sl.registerLazySingleton<UserProfileRepository>(
-    () => UserProfileRepositoryImpl(datasource: sl<UserProfileDatasource>()),
+    () => UserProfileRepositoryImpl(
+      datasource: sl<UserProfileDatasource>(),
+    ),
   );
 
-  // Use cases
   sl.registerLazySingleton<GetUserProfile>(
     () => GetUserProfile(sl<UserProfileRepository>()),
   );
@@ -305,7 +333,6 @@ sl.registerFactory<StaffServiceBloc>(
     () => UpdateUserProfile(sl<UserProfileRepository>()),
   );
 
-  // User profile Bloc
   sl.registerFactory<UserProfileBloc>(
     () => UserProfileBloc(
       getUserProfile: sl<GetUserProfile>(),

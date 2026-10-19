@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.220.39:8000',
+    defaultValue: 'http://192.168.220.45:8000',
   );
 
   static final dio = Dio(

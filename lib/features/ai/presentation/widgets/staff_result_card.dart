@@ -1,6 +1,11 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:service_hub_ai/core/service/service_locator.dart';
 import 'package:service_hub_ai/core/theme/app_colors.dart';
+import 'package:service_hub_ai/features/booking/presentation/bloc/customer_booking_bloc.dart';
+import 'package:service_hub_ai/features/booking/presentation/pages/create_booking_page.dart';
 
 class StaffResultCard extends StatelessWidget {
   final Map<String, dynamic> staff;
@@ -15,10 +20,7 @@ class StaffResultCard extends StatelessWidget {
     final name = staff['name']?.toString() ?? 'Staff member';
     final location =
         staff['location_name']?.toString() ?? 'Location unavailable';
-
-    final distance =
-        (staff['distance_km'] as num?)?.toDouble();
-
+    final distance = (staff['distance_km'] as num?)?.toDouble();
     final imageUrl = staff['profile_image']?.toString();
 
     final services = staff['services'] is List
@@ -129,9 +131,6 @@ class StaffResultCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: services.map((service) {
-                final serviceName =
-                    service['name']?.toString() ?? 'Service';
-
                 return Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 9,
@@ -142,7 +141,7 @@ class StaffResultCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    serviceName,
+                    service['name']?.toString() ?? 'Service',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -156,15 +155,79 @@ class StaffResultCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Staff profile navigation is not connected yet.',
-                    ),
-                  ),
-                );
-              },
+              onPressed: services.isEmpty
+                  ? null
+                  : () async {
+                      Map<String, dynamic>? selectedService;
+
+                      if (services.length == 1) {
+                        selectedService = services.first;
+                      } else {
+                        selectedService =
+                            await showModalBottomSheet<Map<String, dynamic>>(
+                          context: context,
+                          backgroundColor: AppColors.surface,
+                          builder: (sheetContext) {
+                            return SafeArea(
+                              child: ListView(
+                                shrinkWrap: true,
+                                padding: const EdgeInsets.all(16),
+                                children: [
+                                  const Text(
+                                    'Select a service',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ...services.map((service) {
+                                    return ListTile(
+                                      leading: const Icon(
+                                        Icons.home_repair_service,
+                                        color: Colors.white70,
+                                      ),
+                                      title: Text(
+                                        service['name']?.toString() ??
+                                            'Service',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      onTap: () => Navigator.pop(
+                                        sheetContext,
+                                        service,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      if (!context.mounted || selectedService == null) {
+                        return;
+                      }
+
+                      final serviceToBook = selectedService;
+
+                      await Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (routeContext) {
+                            return BlocProvider<CustomerBookingBloc>(
+                              create: (_) => sl<CustomerBookingBloc>(),
+                              child: CreateBookingPage(
+                                staff: staff,
+                                service: serviceToBook,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
               icon: const Icon(Icons.person_outline),
               label: const Text('View staff'),
             ),
