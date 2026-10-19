@@ -189,7 +189,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     if (message.contains('weak-password')) {
-      return 'Password is too weak.';
+      return 'Password must be at least 6 characters.';
     }
 
     if (message.contains('user-not-found')) {
@@ -209,6 +209,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return 'Google sign-in was cancelled.';
     }
 
-    return 'Something went wrong. Please try again.';
+    // Firestore permission errors
+    if (message.contains('permission-denied') ||
+        message.contains('PERMISSION_DENIED') ||
+        message.contains('Missing or insufficient permissions')) {
+      return 'Database access denied. Please contact support.';
+    }
+
+    if (message.contains('unavailable') || message.contains('UNAVAILABLE')) {
+      return 'Service temporarily unavailable. Please try again.';
+    }
+
+    return 'Something went wrong: $message';
   }
 }
